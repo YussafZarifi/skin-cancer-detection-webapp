@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skin Cancer Detection</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-3xl mx-auto mt-10 bg-white p-8 shadow-lg rounded-xl">
+    <h1 class="text-3xl font-bold text-center mb-4">Skin Cancer Detection</h1>
+    <p class="text-center text-gray-600 mb-6">
+        Upload a skin lesion image and get a prediction from the model.
+        <br>
+        <span class="text-xs text-gray-500">Educational demo only – not a medical diagnostic tool.</span>
+    </p>
+
+    <!-- Form + Preview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            <label class="block">
+                <span class="sr-only">Choose File</span>
+                <input type="file" name="file" accept="image/*" required
+                       class="block w-full text-sm text-gray-700 
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-lg file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-blue-600 file:text-white
+                              hover:file:bg-blue-700 cursor-pointer">
+            </label>
+
+            <button type="submit"
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+                Predict
+            </button>
+
+            {% if error_msg %}
+                <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                    {{ error_msg }}
+                </div>
+            {% endif %}
+        </form>
+
+        <!-- Image preview -->
+        <div class="flex items-center justify-center">
+            {% if image_data %}
+                <div class="text-center">
+                    <p class="mb-2 text-sm text-gray-600">Uploaded image:</p>
+                    <img src="{{ image_data }}" alt="Uploaded lesion"
+                         class="max-h-64 mx-auto rounded-lg border border-gray-200 shadow-sm">
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-400 text-center">
+                    No image uploaded yet.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if prediction %}
+    <div class="mt-8 p-6 bg-green-50 rounded-lg border border-green-100">
+        <h2 class="text-xl font-bold mb-2">Prediction: {{ prediction }}</h2>
+
+        {% if confidence %}
+            <p class="text-gray-700 mb-2">
+                Confidence: {{ '%.2f' | format(confidence * 100) }}%
+            </p>
+
+        <!-- Confidence bar -->
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div class="bg-green-500 h-3 rounded-full" data-width="{{ (confidence * 100) | round(2) }}"></div>
+        </div>
+
+        <script type="text/javascript">
+            (function(){
+                const el = document.querySelector('.bg-green-500.h-3.rounded-full[data-width]');
+                if (el) {
+                    el.style.width = el.getAttribute('data-width') + '%';
+                }
+            })();
+        </script>
+    {% endif %}
+</div>
+
+    <!-- Detailed explanation -->
+    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm leading-relaxed">
+        <h3 class="font-semibold mb-2">How to interpret this result</h3>
+        <ul class="list-disc ml-5 space-y-1">
+            <li>The model has classified this image as <strong>{{ prediction }}</strong>.</li>
+            {% if confidence %}
+                <li>The confidence score ({{ (confidence * 100) | round(2) }}%) reflects how strongly
+                    the model prefers this class over the others in its training data.</li>
+            {% endif %}
+            <li>This tool is trained on a limited dataset and is intended for educational use only.</li>
+            <li>It must <strong>not</strong> be used as a substitute for a professional medical diagnosis.</li>
+            <li>If this were a real concern, the correct next step would be to consult a dermatologist.</li>
+        </ul>
+    </div>
+{% endif %}
+
+    <!-- Probability chart -->
+    {% if probs %}
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-3">Class probabilities</h3>
+            <canvas id="probChart" class="w-full"></canvas>
+        </div>
+
+        <script type="text/javascript">
+            const labels = JSON.parse('{{ class_names | tojson | safe }}');
+            const data = JSON.parse('{{ probs | tojson | safe }}');
+
+            const ctx = document.getElementById('probChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Confidence (%)',
+                        data: data,
+                        backgroundColor: '#60a5fa',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        </script>
+    {% endif %}
+
+    <!-- Disclaimer -->
+    <div class="mt-10 text-xs text-gray-500 border-t pt-4">
+        <p>
+            Disclaimer: This web application is a student machine learning project.
+            It is not approved for clinical use and must not be relied upon to make
+            any medical decisions. Always consult a qualified healthcare provider
+            for any concerns about your health.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>
