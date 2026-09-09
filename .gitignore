@@ -1,0 +1,14 @@
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Model weights / large binaries
+*.pth
+
+# VS Code settings (optional)
+.vscode/
+
+skin_cancer_cnn.pth
